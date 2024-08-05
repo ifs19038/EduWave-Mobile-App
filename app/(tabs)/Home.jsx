@@ -127,11 +127,11 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { StatusBar } from 'expo-status-bar';
 import { CheckIcon, XMarkIcon, ChevronRightIcon } from 'react-native-heroicons/outline';
-import { CheckBadgeIcon, ExclamationCircleIcon, ClockIcon, ExclamationTriangleIcon, ShieldCheckIcon } from 'react-native-heroicons/solid';
+import { CheckBadgeIcon, ExclamationCircleIcon, ClockIcon, ExclamationTriangleIcon } from 'react-native-heroicons/solid';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { nisData, tagihanData, riwayatData } from '../../data';
 import { fetchTransaksiById, setSelectedItem } from '../../redux/feature/detailTransaksiSlice';
+import { Picker } from '@react-native-picker/picker';
 
 export default function Home() {
   const user = useSelector((state) => state.user);
@@ -139,6 +139,7 @@ export default function Home() {
   const transaksi = transaksiState.transaksi;
   const dispatch = useDispatch();
   const router = useRouter();
+  const [selectedMonth, setSelectedMonth] = useState(-1);
 
   useEffect(() => {
     if (!user.id) {
@@ -150,7 +151,6 @@ export default function Home() {
     try {
       const response = await fetch(`http://10.10.103.149:8080/api/v1/transaksi/${id}`);
       const data = await response.json();
-      console.log(data);
       dispatch(setSelectedItem(data)); // Set data transaksi di Redux
       router.push('/Loading'); // Navigasi ke halaman berikutnya
     } catch (error) {
@@ -162,12 +162,10 @@ export default function Home() {
     return null; // or a loading spinner
   }
 
-  // Sorting transaksi berdasarkan bulan
-  const sortedTransaksi = [...transaksi].sort((b, a) => {
-    const dateA = new Date(a.tanggal_transaksi);
-    const dateB = new Date(b.tanggal_transaksi);
-    return dateA.getMonth() - dateB.getMonth();
-  });
+  // Filtering transaksi berdasarkan bulan yang dipilih
+  const filteredTransaksi = selectedMonth !== -1
+    ? transaksi.filter((item) => new Date(item.tanggal_transaksi).getMonth() + 1 === selectedMonth)
+    : transaksi;
 
   return (
     <View className="flex-1 bg-bgColor pb-24">
@@ -211,10 +209,32 @@ export default function Home() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-          
+          </View>          
           <View className="mx-6 mt-5">
-            <Text className="text-xl">Riwayat Pembayaran</Text>
+            <View className="flex  flex-row justify-between ">
+              <View className="flex justify-center items-center">
+                <Text className="text-xl  ">Riwayat Pembayaran</Text>
+              </View>
+              <Picker
+              selectedValue={selectedMonth}
+              onValueChange={(itemValue) => setSelectedMonth(itemValue)}
+              style={{ height: 50, width: 50,}}
+              >
+              <Picker.Item label="Semua Bulan" value={-1} />
+              <Picker.Item label="Januari" value={1} />
+              <Picker.Item label="Februari" value={2} />
+              <Picker.Item label="Maret" value={3} />
+              <Picker.Item label="April" value={4} />
+              <Picker.Item label="Mei" value={5} />
+              <Picker.Item label="Juni" value={6} />
+              <Picker.Item label="Juli" value={7} />
+              <Picker.Item label="Agustus" value={8} />
+              <Picker.Item label="September" value={9} />
+              <Picker.Item label="Oktober" value={10} />
+              <Picker.Item label="November" value={11} />
+              <Picker.Item label="Desember" value={12} />
+            </Picker>
+            </View>
             <View className="mt-5">
               <View style={{
                 borderBottomColor: '#bcbcbc',
@@ -222,11 +242,11 @@ export default function Home() {
                 width: '100%',
                 marginBottom: 10
               }} />
-              {sortedTransaksi.map((item, index) => (
+              {filteredTransaksi.map((item, index) => (
                 <Pressable key={index} onPress={() => handlePress(item.id)}>
                   <View className="flex-row justify-between py-2">
                     <View className="flex-row items-center space-x-4">
-                      <View className= {`${getColor(item.status_pembayaran)} rounded-full flex justify-center items-center`}  style={{width:50, height:50}} >
+                      <View className={`${getColor(item.status_pembayaran)} rounded-full flex justify-center items-center`} style={{width: 50, height: 50}}>
                         {getIcon(item.status_pembayaran)}
                       </View>
                       <View>
@@ -293,5 +313,8 @@ const getIcon = (status) => {
       return <ExclamationCircleIcon size={30} color={'white'} />;
   }
 };
+
+
+
 
 
